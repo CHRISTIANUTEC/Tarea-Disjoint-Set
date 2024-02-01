@@ -1,6 +1,13 @@
 #include <iostream>
 #include <vector>
+#include <unordered_map>
 using namespace std;
+
+/*
+Integrantes:
+-Christian Frisancho
+-Isaac Simeón
+*/
 
 class DisjointSet
 {
@@ -52,64 +59,138 @@ public:
 };
 
 template <typename T>
-class DisjointSetTree : public DisjointSet
+class DisjoinSetTree: public DisjointSet
 {
 private:
-    vector<T> data;
-
+    T* data;
+    int n;
+    unordered_map<T, int> map;
 public:
-    DisjointSetTree(T *data, int n) : DisjointSet(n), data(data, data + n)
-    {
+    DisjoinSetTree(){
+        this->data = nullptr;
+        this->n = 0;
     }
 
-    virtual ~DisjointSetTree()
-    {
+    DisjoinSetTree(int n1, T *data, int n) : DisjointSet(n1) {
+        this->data = data;
+        this->n = n;
     }
-    void MakeSet_tree(int i, T value)
-    {
-        data[i] = value;
+    virtual ~DisjoinSetTree(){}
+    void MakeSet(T x) {
+        if (map.find(x) == map.end()) {
+            map[x] = x;
+        }
     }
-
-    int FindTree(T x)
-    {
-        int index = &x - &data[0];
-        return Find(index);
+    int FindTree(T x){
+        if(map[x] != x){
+            map[x] = FindTree(map[x]);
+        }
+        return map[x];
     }
-
-    void UnionTree(T x, T y)
-    {
-        int indexX = &x - &data[0];
-        int indexY = &y - &data[0];
-        Union(indexX, indexY);
+    void UnionTree(T x, T y){
+        int xRoot = FindTree(x);
+        int yRoot = FindTree(y);
+        if(xRoot == yRoot){
+            return;
+        }
+        map[yRoot] = xRoot;
+    }
+    bool isConnected(T x, T y){
+        return FindTree(x) == FindTree(y);
     }
 };
 
 template <typename T>
-class DisjointSetArray : public DisjointSet
+class DisjointSetArray: public DisjointSet
 {
 private:
-    T *data;
+    T* data;
     int n;
-
+    unordered_map<T, int> map;
 public:
-    DisjointSetArray(T *data, int n) : DisjointSet(n), data(data), n(n)
-    {
+    DisjointSetArray(){
+        this->data = nullptr;
+        this->n = 0;
     }
-
-    virtual ~DisjointSetArray()
-    {
+    DisjointSetArray(T* data, int n): DisjointSet(n){
+        this->data = data;
+        this->n = n;
     }
-
-    int FindArray(T x)
-    {
-        int index = &x - data;
-        return Find(index);
+    virtual ~DisjointSetArray(){}
+    void MakeSet(T x){
+        if(map.find(x) == map.end()){
+            map[x] = x;
+        }
     }
-
-    void UnionArray(T x, T y)
-    {
-        int indexX = &x - data;
-        int indexY = &y - data;
-        Union(indexX, indexY);
+    int FindArray(T x){
+        if(map[x] != x){
+            map[x] = FindArray(map[x]);
+        }
+        return map[x];
+    }
+    void UnionArray(T x, T y){
+        int xRoot = FindArray(x);
+        int yRoot = FindArray(y);
+        if(xRoot == yRoot){
+            return;
+        }
+        map[yRoot] = xRoot;
+    }
+    bool isConnected(T x, T y){
+        return FindArray(x) == FindArray(y);
     }
 };
+int main()
+{
+    cout << "Estructura de dato: DisjoinSet" << endl;
+    DisjointSet ds(5);
+    ds.MakeSet(0);
+    ds.MakeSet(1);
+    ds.MakeSet(2);
+    ds.MakeSet(3);
+    ds.MakeSet(4);
+    ds.Union(0, 1);
+    ds.Union(1, 2);
+    ds.Union(3, 4);
+    //Verificando si estan conectados
+    cout << ds.isConnected(0, 2) << endl; //1
+    cout << ds.isConnected(3, 4) << endl; //1
+    cout << ds.isConnected(0, 4) << endl; //0
+
+    cout<<"Nueva estructura de dato: DisjoinSetArray"<<endl;
+
+    int data[5] = {0, 1, 2, 3, 4};
+    int *ptr = data;
+    DisjoinSetTree<int> dst(0, ptr, 5);
+    dst.MakeSet(0);
+    dst.MakeSet(1);
+    dst.MakeSet(2);
+    dst.MakeSet(3);
+    dst.MakeSet(4);
+    dst.UnionTree(0, 2);
+    dst.UnionTree(1, 3);
+    dst.UnionTree(0, 4);
+
+    cout << dst.isConnected(0, 2) << endl; //1
+    cout << dst.isConnected(3, 4) << endl; //0
+    cout << dst.isConnected(0, 4) << endl; //1
+
+    cout<<"Nueva estructura de dato: DisjoinSetArray"<<endl;
+    int data2[5] = {10,11,12,13,14};
+    int *ptr2 = data2;
+    DisjointSetArray<int> dsa(ptr2, 5);
+
+    dsa.MakeSet(10);
+    dsa.MakeSet(11);
+    dsa.MakeSet(12);
+    dsa.MakeSet(13);
+    dsa.MakeSet(14);
+    dsa.UnionArray(10, 11);
+    dsa.UnionArray(11, 12);
+    dsa.UnionArray(13, 14);
+
+    cout << dsa.isConnected(10, 13) << endl; //0
+    cout << dsa.isConnected(13, 14) << endl; //1
+    cout << dsa.isConnected(11, 14) << endl; //0
+    return 0;
+}
